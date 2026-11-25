@@ -6,3 +6,5 @@ __pycache__/
 # Unverschlüsselte Vault-Passwörter oder lokale Key-Dateien ausschließen
 *vault_pass*
 id_ed25519*
+
+kiojop
