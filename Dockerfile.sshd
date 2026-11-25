@@ -1,0 +1,14 @@
+FROM ubuntu:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openssh-server python3 ca-certificates && \
+    mkdir -p /var/run/sshd && \
+    echo 'root:root' | chpasswd && \
+    sed -ri 's/^#?PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -ri 's/^#?PasswordAuthentication\s+.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    rm -rf /var/lib/apt/lists/*
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

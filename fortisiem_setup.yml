@@ -1,0 +1,74 @@
+- name: Basis-Setup für alle FortiSIEM-Lab-Nodes
+  hosts: fortisiem_all
+  become: true
+  vars:
+    base_packages:
+      - curl
+      - jq
+      - net-tools
+
+  tasks:
+    - name: Basis-Pakete installieren
+      ansible.builtin.apt:
+        name: "{{ base_packages }}"
+        state: present
+        update_cache: true
+
+    - name: Konfigurationsverzeichnis anlegen
+      ansible.builtin.file:
+        path: /etc/fortisiem
+        state: directory
+        mode: "0755"
+
+- name: Supervisor und Collector konfigurieren
+  hosts: fortisiem_supervisors:fortisiem_collectors
+  become: true
+  vars:
+    syslog_listen_port: 514
+    supervisor_ip: 172.28.10.11
+
+  tasks:
+    - name: Collector- und Supervisor-Konfiguration schreiben
+      ansible.builtin.copy:
+        dest: /etc/fortisiem/node.conf
+        mode: "0644"
+        content: |
+          NODE_ROLE={{ group_names[0] }}
+          SUPERVISOR_TARGET={{ supervisor_ip }}
+          SYSLOG_PORT={{ syslog_listen_port }}
+      notify: Log-Reload simulieren
+
+  handlers:
+    - name: Log-Reload simulieren
+      ansible.builtin.shell: "date '+%Y-%m-%d %H:%M:%S - Konfiguration neu geladen' >> /var/log/fortisiem-reload.log"
+
+- name: Agent-Nodes an Collector anbinden
+  hosts: fortisiem_agents
+  become: true
+  vars:
+    collector_ip: 172.28.10.12
+    heartbeat_interval: 30
+
+  tasks:
+    - name: Agent-Konfiguration ausrollen
+      ansible.builtin.copy:
+        dest: /etc/fortisiem/agent.conf
+        mode: "0640"
+        content: |
+          COLLECTOR_TARGET={{ collector_ip }}
+          HEARTBEAT_SEC={{ heartbeat_interval }}
+          HOSTNAME={{ inventory_hostname }}
+      notify: Agent-Reload simulieren
+
+    - name: Geschriebene Agent-Konfiguration auslesen
+      ansible.builtin.slurp:
+        src: /etc/fortisiem/agent.conf
+      register: agent_conf_raw
+
+    - name: Agent-Konfiguration im Output anzeigen
+      ansible.builtin.debug:
+        msg: "{{ agent_conf_raw.content | b64decode }}"
+
+  handlers:
+    - name: Agent-Reload simulieren
+      ansible.builtin.shell: "date '+%Y-%m-%d %H:%M:%S - Agent neu geladen' >> /var/log/fortisiem-reload.log"

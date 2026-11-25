@@ -1,0 +1,8 @@
+*.retry
+.ansible/
+__pycache__/
+*.pyc
+.DS_Store
+# Unverschlüsselte Vault-Passwörter oder lokale Key-Dateien ausschließen
+*vault_pass*
+id_ed25519*

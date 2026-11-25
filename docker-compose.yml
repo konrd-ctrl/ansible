@@ -1,0 +1,37 @@
+services:
+  fortisiem-supervisor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sshd
+    container_name: lab-fsm-supervisor
+    hostname: fsm-sup-01
+    networks:
+      ansible_net:
+        ipv4_address: 172.28.10.11
+
+  fortisiem-collector:
+    build:
+      context: .
+      dockerfile: Dockerfile.sshd
+    container_name: lab-fsm-col-01
+    hostname: fsm-col-01
+    networks:
+      ansible_net:
+        ipv4_address: 172.28.10.12
+
+  fortisiem-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.sshd
+    container_name: lab-fsm-agt-01
+    hostname: fsm-agt-01
+    networks:
+      ansible_net:
+        ipv4_address: 172.28.10.13
+
+networks:
+  ansible_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.10.0/24
